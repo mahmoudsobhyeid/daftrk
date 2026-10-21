@@ -1,0 +1,96 @@
+name: Deploy to Staging & Send Test Invite
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_ref:
+        description: 'Supabase project ref (e.g. abcd1234)'
+        required: true
+      tenant_id:
+        description: 'Tenant / company UUID to invite into'
+        required: true
+      invite_email:
+        description: 'Email to invite (test recipient)'
+        required: true
+        default: 'hanannana205@gmail.com'
+      role:
+        description: 'Role to assign to invited user'
+        required: false
+        default: 'employee'
+
+jobs:
+  deploy-and-invite:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client jq
+
+      - name: Install supabase CLI
+        run: npm install -g supabase
+
+      - name: Deploy migrations (psql)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Applying migrations..."
+          psql "$DATABASE_URL" -f supabase/migrations/20260906134500_add_permissions_to_team_members.sql
+          psql "$DATABASE_URL" -f supabase/migrations/20260904133328_team_invitation_system.sql
+          psql "$DATABASE_URL" -f supabase/migrations/20260906180000_fix_invite_and_deletion_flow.sql
+
+      - name: Deploy Edge Function
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase functions deploy send-team-invitation --project-ref ${{ github.event.inputs.project_ref }} --no-verify-jwt
+
+      - name: Ensure Edge Function secret `RESEND_API_KEY` is set
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase secrets set RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" --project-ref ${{ github.event.inputs.project_ref }} || true
+          supabase secrets set RESEND_FROM_EMAIL="${{ secrets.RESEND_FROM_EMAIL }}" --project-ref ${{ github.event.inputs.project_ref }} || true
+
+      - name: Invoke invite_team_member RPC to create invitation and return token
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Calling invite_team_member RPC for tenant ${{ github.event.inputs.tenant_id }} and ${{ github.event.inputs.invite_email }}"
+          TOKEN_JSON=$(psql "$DATABASE_URL" -At -c "SELECT public.invite_team_member('${{ github.event.inputs.tenant_id }}'::uuid, '${{ github.event.inputs.invite_email }}', '${{ github.event.inputs.role }}', '{}'::jsonb)::text;")
+          echo "RPC result: $TOKEN_JSON"
+          echo "$TOKEN_JSON" | jq -r .token > token.txt
+          cat token.txt
+          TOKEN=$(cat token.txt)
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "Failed to obtain token from RPC" && exit 1
+          fi
+          echo "Token obtained"
+
+      - name: Call Edge Function to send invite email
+        env:
+          PROJECT_REF: ${{ github.event.inputs.project_ref }}
+          INVITE_EMAIL: ${{ github.event.inputs.invite_email }}
+        run: |
+          TOKEN=$(cat token.txt)
+          SETUP_URL="https://app.example.com/auth?view=setup&token=$TOKEN"
+          EXPIRES_AT=$(date -u -d "+72 hours" +%Y-%m-%dT%H:%M:%SZ)
+          echo "Calling Edge Function to send invite..."
+          HTTP_STATUS=$(curl -s -o /tmp/ef_resp.txt -w "%{http_code}" -X POST "https://${PROJECT_REF}.functions.supabase.co/send-team-invitation" -H "Content-Type: application/json" -d '{"email":"'"${INVITE_EMAIL}"'","companyName":"CI Staging","inviterName":"CI Deploy","role":"'"${{ github.event.inputs.role }}"'","setupUrl":"'$SETUP_URL'","token":"'$TOKEN'","expiresAt":"'$EXPIRES_AT'"}')
+          echo "Edge function HTTP status: $HTTP_STATUS"
+          echo "Response body:"
+          cat /tmp/ef_resp.txt
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "Edge function returned non-200" && exit 1
+          fi
+
+      - name: Success
+        run: echo "Invitation sent to ${{ github.event.inputs.invite_email }}"

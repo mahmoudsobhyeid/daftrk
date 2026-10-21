@@ -1,0 +1,7 @@
+{
+  "name": "Daftrk — Cloud Business Management Platform",
+  "description": "Daftrk is a modern cloud platform that helps businesses manage customers, products, and professional invoices. Bilingual (Arabic/English), multi-tenant, and beautifully designed.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

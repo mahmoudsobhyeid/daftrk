@@ -1,0 +1,84 @@
+/*
+# Fix admin "Add User" — create users via database function
+
+## Problem
+The admin "Add User" button called `supabase.auth.admin.createUser()` from
+the browser. That API requires the service role key, which the browser
+doesn't have, so it always fails. The existing `admin_invite_user`
+function was a stub that just raised an exception.
+
+## Fix
+Rewrite `admin_invite_user` to insert directly into `auth.users` with a
+bcrypt-hashed password (pgcrypto's crypt() + gen_salt('bf')). The function
+verifies the caller is a platform admin, creates the auth user, and returns
+the new user id. The frontend is updated to call this RPC instead of the
+admin API.
+*/
+
+CREATE OR REPLACE FUNCTION public.admin_invite_user(
+  p_email text,
+  p_full_name text,
+  p_password text
+)
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public', 'auth' AS $$
+DECLARE
+  v_user_id uuid := gen_random_uuid();
+  v_existing uuid;
+  v_hashed text;
+BEGIN
+  -- Verify caller is a platform admin
+  IF NOT EXISTS (
+    SELECT 1 FROM user_profiles WHERE id = auth.uid() AND is_platform_admin = true
+  ) THEN
+    RAISE EXCEPTION 'Unauthorized';
+  END IF;
+
+  -- Check for existing user
+  SELECT id INTO v_existing FROM auth.users WHERE email = lower(trim(p_email));
+  IF v_existing IS NOT NULL THEN
+    RAISE EXCEPTION 'A user with this email already exists';
+  END IF;
+
+  -- Hash password with bcrypt
+  v_hashed := crypt(p_password, gen_salt('bf'));
+
+  -- Insert into auth.users
+  INSERT INTO auth.users (
+    id,
+    instance_id,
+    aud,
+    role,
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    confirmed_at,
+    raw_app_meta_data,
+    raw_user_meta_data,
+    created_at,
+    updated_at
+  ) VALUES (
+    v_user_id,
+    '00000000-0000-0000-0000-000000000000'::uuid,
+    'authenticated',
+    'authenticated',
+    lower(trim(p_email)),
+    v_hashed,
+    now(),
+    now(),
+    jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')),
+    CASE WHEN p_full_name IS NOT NULL AND p_full_name <> ''
+      THEN jsonb_build_object('full_name', p_full_name)
+      ELSE '{}'::jsonb END,
+    now(),
+    now()
+  );
+
+  -- Create user profile (the handle_new_user_profile trigger may also do this,
+  -- but we do it explicitly to be safe)
+  INSERT INTO user_profiles (id, full_name)
+  VALUES (v_user_id, NULLIF(p_full_name, ''))
+  ON CONFLICT (id) DO NOTHING;
+
+  RETURN v_user_id;
+END;
+$$;

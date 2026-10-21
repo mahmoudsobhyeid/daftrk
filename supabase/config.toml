@@ -1,0 +1,17 @@
+[functions.lemon-webhook]
+verify_jwt = false
+
+[functions.send-confirmation-email]
+verify_jwt = false
+
+[functions.send-team-invitation]
+verify_jwt = false
+
+[functions.zatca-generate-csr]
+verify_jwt = false
+
+[functions.zatca-verify-otp]
+verify_jwt = false
+
+[functions.zatca-test-connection]
+verify_jwt = false

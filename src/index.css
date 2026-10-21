@@ -1,0 +1,298 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&family=Noto+Sans+Arabic:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: #f8fafc;
+    --color-card: #ffffff;
+    --color-border: #e2e8f0;
+    --color-text: #1e293b;
+    --color-muted: #64748b;
+    --color-primary: #2563eb;
+    --color-accent: #38bdf8;
+    --sat: env(safe-area-inset-top, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-secondary-50 text-secondary-800 dark:bg-secondary-950 dark:text-secondary-100;
+    font-feature-settings: 'cv11', 'ss01', 'cv02', 'cv03';
+    letter-spacing: -0.011em;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  [dir='rtl'] body {
+    @apply font-arabic;
+    letter-spacing: 0;
+  }
+
+  /* Arabic script cursive protection: Prevent character detachment */
+  [dir='rtl'],
+  [dir='rtl'] *,
+  .font-arabic,
+  .font-arabic * {
+    letter-spacing: 0 !important;
+    word-spacing: normal !important;
+  }
+
+  [dir='ltr'] body {
+    @apply font-sans;
+  }
+
+  * {
+    @apply border-secondary-200 dark:border-secondary-800;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-primary-500/20 text-primary-900 dark:text-primary-200;
+  }
+
+  /* Headings */
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  /* ─── Buttons ─────────────────────────────────────── */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ease-out-expo focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-secondary-900 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none select-none;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-600 text-white shadow-primary hover:bg-primary-700 hover:shadow-primary-hover active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply btn bg-white text-secondary-700 border border-secondary-200 shadow-xs hover:bg-secondary-50 hover:border-secondary-300 active:scale-[0.98] dark:bg-secondary-800 dark:text-secondary-200 dark:border-secondary-700 dark:hover:bg-secondary-700;
+  }
+
+  .btn-ghost {
+    @apply btn text-secondary-600 hover:bg-secondary-100 hover:text-secondary-900 dark:text-secondary-400 dark:hover:bg-secondary-800 dark:hover:text-secondary-100;
+  }
+
+  .btn-danger {
+    @apply btn bg-danger-600 text-white shadow-sm hover:bg-danger-700 active:scale-[0.98];
+  }
+
+  .btn-success {
+    @apply btn bg-success-600 text-white shadow-sm hover:bg-success-700 active:scale-[0.98];
+  }
+
+  .btn-warning {
+    @apply btn bg-warning-500 text-white shadow-sm hover:bg-warning-600 active:scale-[0.98];
+  }
+
+  .btn-outline {
+    @apply btn border-2 border-primary-600 text-primary-600 hover:bg-primary-50 active:scale-[0.98] dark:text-primary-400 dark:border-primary-500 dark:hover:bg-primary-900/20;
+  }
+
+  /* ─── Inputs ──────────────────────────────────────── */
+  .input {
+    @apply w-full rounded-xl border border-secondary-200 bg-white px-3.5 py-2.5 text-sm text-secondary-800 placeholder-secondary-400 transition-all duration-200 focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-500/10 hover:border-secondary-300 dark:bg-secondary-900 dark:border-secondary-700 dark:text-secondary-100 dark:placeholder-secondary-500 dark:hover:border-secondary-600 dark:focus:border-primary-500;
+  }
+
+  .input-error {
+    @apply border-danger-400 focus:border-danger-500 focus:ring-danger-500/10;
+  }
+
+  .label {
+    @apply block text-sm font-semibold text-secondary-700 dark:text-secondary-300 mb-1.5;
+  }
+
+  .label-hint {
+    @apply text-xs font-normal text-secondary-400 dark:text-secondary-500;
+  }
+
+  /* ─── Cards ──────────────────────────────────────── */
+  .card {
+    @apply rounded-2xl border border-secondary-200 bg-white shadow-card dark:bg-secondary-900 dark:border-secondary-800;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-300 ease-out-expo hover:shadow-card-hover hover:border-secondary-300 dark:hover:border-secondary-700;
+  }
+
+  .card-glass {
+    @apply rounded-2xl border border-white/20 bg-white/70 backdrop-blur-xl shadow-glass dark:bg-secondary-900/70 dark:border-secondary-700/50;
+  }
+
+  /* ─── Badges ─────────────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+
+  .badge-dot {
+    @apply inline-flex h-1.5 w-1.5 rounded-full;
+  }
+
+  /* ─── Glass surfaces ──────────────────────────────── */
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20 dark:bg-secondary-900/70 dark:border-secondary-700/50;
+  }
+
+  .glass-strong {
+    @apply bg-white/85 backdrop-blur-2xl border border-white/30 dark:bg-secondary-900/85 dark:border-secondary-700/60;
+  }
+
+  /* ─── Navigation ─────────────────────────────────── */
+  .nav-item {
+    @apply w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ease-out-expo;
+  }
+
+  .nav-item-active {
+    @apply bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300;
+  }
+
+  .nav-item-idle {
+    @apply text-secondary-500 hover:bg-secondary-100 hover:text-secondary-900 dark:text-secondary-400 dark:hover:bg-secondary-800 dark:hover:text-secondary-100;
+  }
+
+  /* ─── Skeleton ───────────────────────────────────── */
+  .skeleton {
+    @apply rounded-lg bg-gradient-to-r from-secondary-200 via-secondary-100 to-secondary-200 dark:from-secondary-800 dark:via-secondary-700 dark:to-secondary-800;
+    background-size: 200% 100%;
+    @apply animate-shimmer;
+  }
+
+  /* ─── Divider ─────────────────────────────────────── */
+  .divider {
+    @apply h-px bg-gradient-to-r from-transparent via-secondary-200 to-transparent dark:via-secondary-800;
+  }
+}
+
+/* ─── Scrollbar ─────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-secondary-300 dark:bg-secondary-700 rounded-full;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-secondary-400 dark:bg-secondary-600;
+}
+
+/* ─── Print ─────────────────────────────────────────── */
+@media print {
+  /* Hide everything, then reveal only the print area */
+  body * { visibility: hidden !important; }
+  #invoice-print-area, #invoice-print-area *,
+  #contract-print-area, #contract-print-area *,
+  #re-invoice-print-area, #re-invoice-print-area * { visibility: visible !important; }
+
+  /* Position the print area at the top of the page */
+  #invoice-print-area,
+  #contract-print-area,
+  #re-invoice-print-area {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  /* Force exact color reproduction for backgrounds and borders */
+  #invoice-print-area,
+  #invoice-print-area *,
+  #contract-print-area,
+  #contract-print-area *,
+  #re-invoice-print-area,
+  #re-invoice-print-area * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body { background: white !important; margin: 0 !important; padding: 0 !important; }
+
+  /* Hide elements marked no-print or print:hidden */
+  .no-print, .print\:hidden { display: none !important; }
+
+  /* A4 page setup */
+  .print-a4 {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    padding: 15mm !important;
+    margin: 0 auto !important;
+    font-size: 12pt !important;
+  }
+
+  /* Thermal 80mm */
+  .print-thermal {
+    width: 80mm !important;
+    min-height: auto !important;
+    padding: 4mm 3mm !important;
+    margin: 0 auto !important;
+    font-size: 9pt !important;
+    font-family: 'Courier New', monospace !important;
+  }
+
+  /* Prevent page breaks inside elements */
+  .print-a4 table, .print-thermal table { page-break-inside: avoid !important; }
+  .print-no-break { page-break-inside: avoid !important; }
+
+  /* RTL/LTR print fixes with Arabic font priority */
+  [dir="rtl"] .print-rtl,
+  [dir="rtl"] #invoice-print-area,
+  #invoice-print-area[dir="rtl"],
+  [dir="rtl"] #re-invoice-print-area,
+  #re-invoice-print-area[dir="rtl"],
+  [dir="rtl"] #contract-print-area,
+  #contract-print-area[dir="rtl"] {
+    direction: rtl !important;
+    text-align: right !important;
+    font-family: 'Cairo', 'Tajawal', 'Noto Sans Arabic', system-ui, sans-serif !important;
+    letter-spacing: 0 !important;
+  }
+  [dir="ltr"] .print-ltr { direction: ltr !important; text-align: left !important; }
+
+  /* QR code crisp printing */
+  .print-qr canvas { print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important; }
+
+  /* Reset dark mode for print */
+  .print-a4, .print-thermal {
+    background: white !important;
+    color: #000 !important;
+    border-color: #ccc !important;
+  }
+  .print-a4 .print-header, .print-thermal .print-header { color: #000 !important; }
+}
+
+/* Capacitor Mobile Safe Area Utilities */
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top, 0px), 0.75rem);
+}
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
+}
+.pl-safe {
+  padding-left: max(env(safe-area-inset-left, 0px), 0.75rem);
+}
+.pr-safe {
+  padding-right: max(env(safe-area-inset-right, 0px), 0.75rem);
+}
+

@@ -1,0 +1,1 @@
+UPDATE plans SET is_active = false WHERE id NOT IN ('free_trial', 'pro');
